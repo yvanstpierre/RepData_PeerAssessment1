@@ -10,7 +10,8 @@ In this first step, the zipped csv file included in the current repository
 *weekdays()* function. Options are also set for numerical outputs in the text, 
 i.e. means and medians, to appear in fixed rather than scientific format. 
 
-```{r loaddata}
+
+```r
 options(scipen = 1)
 pa1data <- read.csv(unz("activity.zip", "activity.csv"), 
                     colClasses = c("numeric", "Date", "integer"))
@@ -23,23 +24,32 @@ For this part of the project, the totals per day are computed using the
 produced, with frequencies on the y axis, i.e. number of days, by total number 
 of steps per day on the x axis.
 
-```{r totalhist}
+
+```r
 pa1perday <- with(pa1data, tapply(steps, date, sum))
 hist(pa1perday, main = "Histogram of total steps per day", 
      xlab = "Total steps per day", ylab = "Number of days")
 ```
 
+![plot of chunk totalhist](figure/totalhist-1.png) 
+
 Next, the summary function is called to compute the mean and median values, 
 which are then reported both as output of the code chunk and as inline text 
 computations in the following lines of text.
 
-``` {r totalsum}
+
+```r
 pa1sum <- summary(pa1perday)
 pa1sum[c(3,4)]
 ```
 
-The mean total number of steps taken per day is `r pa1sum[3]` and the median 
-total number is `r pa1sum[4]`.
+```
+## Median   Mean 
+##  10760  10770
+```
+
+The mean total number of steps taken per day is 10760 and the median 
+total number is 10770.
 
 ## What is the average daily activity pattern?
 
@@ -48,35 +58,48 @@ the function *aggregate()*, producing the data frame called *pa1perint*. Missing
 values are excluded from the calculations. Then, a time series plot is created 
 for average steps on the y axis per 5-minute intervals on the x axis.
 
-```{r interplot}
+
+```r
 pa1perint <- aggregate(steps ~ interval, pa1data, mean, na.rm = TRUE)
 plot(pa1perint$interval, pa1perint$steps, type="l", 
      main = "Time-series plot of average steps per 5-minute interval", 
      xlab = "5-minute intervals", ylab = "Average number of steps")
 ```
 
+![plot of chunk interplot](figure/interplot-1.png) 
+
 And now, the 5-minute interval where the maximum average number of steps were 
 taken is identified, again both as R code output and inline in the text.
 
-```{r intermax}
+
+```r
 maxint <- pa1perint$interval[which.max(pa1perint$steps)]
 maxint
 ```
 
+```
+## [1] 835
+```
+
 The 5-minute interval where the maximum number of steps was taken on average 
-was the interval `r maxint`.
+was the interval 835.
 
 ## Imputing missing values
 
 Here we start by finding the number of rows of data with missing values in the 
 original data. It is again reported both as R output and inline as text.
 
-```{r nanumber}
+
+```r
 nasum <- sum(is.na(pa1data$steps))
 nasum
 ```
 
-The number of rows with missing value in the original data is `r nasum`.  
+```
+## [1] 2304
+```
+
+The number of rows with missing value in the original data is 2304.  
   
 Next, we impute the average steps per 5-minute interval for each missing value. 
 This is done by merging the averages stored in the data frame created for the 
@@ -87,7 +110,8 @@ original data, and the added column is dropped once the missing values are
 replaced, so that the new dataset is equal to the original, except for the 
 missing values replaced.
 
-```{r imputation}
+
+```r
 colnames(pa1perint)[2] <- "meansteps"
 pa1impd <- merge(pa1data, pa1perint, by = "interval")
 pa1impd$steps[is.na(pa1impd$steps)] <- pa1impd$meansteps[is.na(pa1impd$steps)]
@@ -98,16 +122,27 @@ With this new data, we replicate the work done in the first section, to produce
 the corresponding histogram, and calculate and report the mean and median total 
 number of steps taken in each day (in R output and inline).
 
-```{r imputedhist}
+
+```r
 pa1impday <- with(pa1impd, tapply(steps, date, sum))
 hist(pa1impday, main = "Histogram of total steps per day", 
      xlab = "Total steps per day", ylab = "Number of days")
+```
+
+![plot of chunk imputedhist](figure/imputedhist-1.png) 
+
+```r
 pa1impsum <- summary(pa1impday)
 pa1impsum[c(3,4)]
 ```
 
-The mean total number of steps taken per day is `r pa1impsum[3]` and the median 
-total number is `r pa1impsum[4]`.  
+```
+## Median   Mean 
+##  10770  10770
+```
+
+The mean total number of steps taken per day is 10770 and the median 
+total number is 10770.  
   
 As we can see, the middle bin of the histogram now includes the days where the 
 missing values were replaced with the averages across all days. As is to be 
@@ -124,7 +159,8 @@ to produce the data frame *pa1impint*. This is then used to create a 2-panel
 time series plot, using the lattice package. Note that a warning message is 
 issued when the package is loaded.
 
-```{r imputedplot}
+
+```r
 pa1impd$daytype <- as.factor(ifelse(weekdays(pa1impd$date) %in% 
                              c("Saturday","Sunday"), "weekend", "weekday"))
 pa1impint <- aggregate(steps ~ interval + daytype, pa1impd, mean)
@@ -132,3 +168,5 @@ library(lattice)
 xyplot(steps ~ interval | daytype, pa1impint, type = "l", layout = c(1,2), 
        xlab = "Interval", ylab = "Number of steps")
 ```
+
+![plot of chunk imputedplot](figure/imputedplot-1.png) 
